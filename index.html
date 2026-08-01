@@ -1,199 +1,270 @@
 <!DOCTYPE html>
-<html>
+
+
+<!-- Ultimate Game Stash file--> 
+<!-- For the regularly updating doc go to https://docs.google.com/document/d/1_FmH3BlSBQI7FGgAQL59-ZPe8eCxs35wel6JUyVaG8Q/ -->
+
+
+<html lang="en-us">
+<base href="https://cdn.jsdelivr.net/gh/bubbls/Tanuki-Sunset@master/">
 <head>
-    <title>Home - Classroom</title>
-    <link rel="icon" href="https://cdn.jsdelivr.net/gh/davidpalmer936399-create/ddr5/google-classroom-icon_800.png">
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: linear-gradient(135deg, #2e3244 0%, #36224b 100%);
-            min-height: 100vh;
-            margin: 0;
-            padding: 0;
-            display: flex;
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <body>
+  <div id="unityContainer"></div>
+</body>
+  <title>Unity  Player </title>
+  <script src="Build/UnityLoader.js"></script>
+  <script>
+    window.mergedBlobUrls = {};
+    window.assetsReady = false;
+
+    async function mergeSplitFile(fileUrlBase, numParts = 3) {
+      const partUrls = Array.from({ length: numParts }, (_, i) => 
+        `${fileUrlBase}.part${i + 1}`
+      );
+
+      try {
+        const responses = await Promise.all(
+          partUrls.map(url => fetch(url))
+        );
+
+        if (responses.some(r => !r.ok)) {
+          return null;
         }
 
-        .sidebar {
-            position: fixed;
-            left: 0;
-            top: 0;
-            width: 80px;
-            height: 100vh;
-            background: rgba(0, 0, 0, 0.3);
-            backdrop-filter: blur(10px);
-            padding: 20px 10px;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            overflow-y: auto;
-            box-shadow: 2px 0 10px rgba(0,0,0,0.3);
-            z-index: 1000;
-        }
+        const parts = await Promise.all(
+          responses.map(r => r.arrayBuffer())
+        );
 
-        .sidebar::-webkit-scrollbar {
-            width: 6px;
-        }
+        const combinedBlob = new Blob(parts, {
+          type: 'application/octet-stream'
+        });
 
-        .sidebar::-webkit-scrollbar-track {
-            background: rgba(255,255,255,0.1);
-        }
+        return URL.createObjectURL(combinedBlob);
+      } catch (error) {
+        return null;
+      }
+    }
 
-        .sidebar::-webkit-scrollbar-thumb {
-            background: rgba(255,255,255,0.3);
-            border-radius: 3px;
-        }
+    function setupXHRInterceptor() {
+      if (window.xhrInterceptorInstalled) {
+        return;
+      }
+      
+      const originalOpen = XMLHttpRequest.prototype.open;
+      const originalSend = XMLHttpRequest.prototype.send;
 
-        .sidebar-btn {
-            background: rgb(89, 134, 218);
-            border: none;
-            padding: 12px;
-            font-size: 18px;
-            font-weight: 700;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            color: white;
-            text-align: center;
-            min-height: 45px;
-        }
-
-        .sidebar-btn:hover {
-            background: #79aadb;
-            transform: scale(1.05);
-        }
-
-        .sidebar-btn.empty {
-            opacity: 0.4;
-            cursor: default;
-        }
-
-        .sidebar-btn.empty:hover {
-            transform: none;
-            background: rgb(89, 134, 218);
-        }
-
-        .main-content {
-            margin-left: 100px;
-            flex: 1;
-            padding: 20px;
-        }
-
-        h1 {
-            color: white;
-            text-align: center;
-            margin-bottom: 30px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-        }
-
-        .letter-section {
-            margin-bottom: 40px;
-            padding: 0 20px;
-            max-width: 900px;
-            margin-left: auto;
-            margin-right: auto;
-            min-height: 100px;
-        }
-
-        .letter-section.empty {
-            opacity: 0.5;
-        }
-
-        .letter-header {
-            color: white;
-            font-size: 32px;
-            font-weight: bold;
-            margin-bottom: 15px;
-            padding-bottom: 10px;
-            border-bottom: 3px solid rgba(255,255,255,0.3);
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-        }
-
-        .buttons-container {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            align-items: center;
-        }
-
-        .empty-message {
-            color: rgba(255,255,255,0.6);
-            font-style: italic;
-            text-align: center;
-            padding: 20px;
-        }
-
-        input[type="button"] {
-            background: rgb(89, 134, 218);
-            border: none;
-            padding: 15px 30px;
-            font-size: 16px;
-            font-weight: 500;
-            border-radius: 8px;
-            cursor: pointer;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            transition: all 0.3s ease;
-            width: 100%;
-            max-width: 600px;
-            color: white;
-            text-align: left;
-        }
-
-        input[type="button"]:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 12px rgba(0,0,0,0.2);
-            background: #79aadb;
-        }
-
-        input[type="button"]:active {
-            transform: translateY(0);
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-
-        @media (max-width: 768px) {
-            .sidebar {
-                width: 60px;
-                padding: 15px 5px;
-            }
-            .sidebar-btn {
-                padding: 8px;
-                font-size: 16px;
-            }
-            .main-content {
-                margin-left: 70px;
-            }
-        }
-    </style>
-</head>
-<body>
-    <!-- Sidebar Navigation -->
-    <div class="sidebar" id="sidebar">
-    </div>
-
-    <!-- Main Content -->
-    <div class="main-content">
-        <h1>UGS Files</h1>
-    <h2 style="color: white; text-align: center; margin-bottom: 30px; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); font-weight: normal; font-size: 18px;">
-    Files from 
-    <a href="https://docs.google.com/document/d/1_FmH3BlSBQI7FGgAQL59-ZPe8eCxs35wel6JUyVaG8Q/" 
-        target="_blank" 
-        style="display: inline; color: #79aadb; text-decoration: none; font-size: 18px; text-shadow: 1px 1px 2px rgba(0,0,0,0.2);">
-        Ultimate Game Stash Google Doc
-    </a>
-    </h2>
-    <h2 style="color: white; text-align: center; margin-bottom: 30px; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); font-weight: normal; font-size: 18px;">
-    Discord Server:
-    <a href="https://discord.gg/rmVsAqkpkA" 
-        target="_blank" 
-        style="display: inline; color: #79aadb; text-decoration: none; font-size: 18px; text-shadow: 1px 1px 2px rgba(0,0,0,0.2);">
-        https://discord.gg/rmVsAqkpkA
-    </a>
-    <button id="lolbutton" onclick="const script = document.createElement('script');script.src = 'https://cdn.jsdelivr.net/gh/bubbls/ugs-singlefile@main/games.js';document.body.appendChild(script);">Click to load if it isnt loading</button>
-    </h2>
-
+      XMLHttpRequest.prototype.open = function(method, url, ...args) {
+        this._url = url;
+        this._method = method;
+        this._args = args;
         
-        <div id="sections-container"> 
-        </div>
-    </div>
-    <script src="https://cdn.jsdelivr.net/gh/bubbls/ugs-singlefile@main/games.js"></script>
-   </body>
-   </html>
+        let finalUrl = url;
+        const decodedUrl = decodeURIComponent(url);
+        
+        for (const [filename, blobUrl] of Object.entries(window.mergedBlobUrls)) {
+          if (url.includes(encodeURIComponent(filename)) || 
+              decodedUrl.includes(filename) || 
+              url.includes(filename)) {
+            finalUrl = blobUrl;
+            break;
+          }
+        }
+        
+        return originalOpen.call(this, method, finalUrl, ...args);
+      };
+
+      XMLHttpRequest.prototype.send = function(...args) {
+        const xhr = this;
+        
+        if (!window.assetsReady) {
+          const checkReady = setInterval(() => {
+            if (window.assetsReady) {
+              clearInterval(checkReady);
+              originalSend.apply(xhr, args);
+            }
+          }, 50);
+          return;
+        }
+        
+        return originalSend.apply(this, args);
+      };
+      
+      window.xhrInterceptorInstalled = true;
+    }
+
+    async function prepareGameAssets() {
+      try {
+        window.assetsReady = false;
+        delete window.xhrInterceptorInstalled;
+        window.mergedBlobUrls = {};
+        
+        setupXHRInterceptor();
+        
+        const filesToMerge = [
+          'Build/WebGL.data.unityweb'
+        ];
+        
+        for (const filename of filesToMerge) {
+          const blobUrl = await mergeSplitFile(filename, 3);
+          if (blobUrl) {
+            window.mergedBlobUrls[filename] = blobUrl;
+          }
+        }
+        
+        window.assetsPrepared = true;
+        window.assetsReady = true;
+        
+        UnityLoader.instantiate("unityContainer", "Build/WebGL.json");
+        
+      } catch (error) {
+        window.assetsPrepared = false;
+        window.assetsReady = true;
+        UnityLoader.instantiate("unityContainer", "Build/WebGL.json");
+      }
+    }
+
+    prepareGameAssets();
+  </script>
+  <style>
+  * {
+    margin: 0;
+    padding: 0;
+  }
+
+  html, body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background-color: #222;
+  }
+
+  #unityContainer {
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  canvas {
+    width: 100% !important;
+    height: 100% !important;
+  }
+</style>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: #333;
+    }
+
+    canvas {
+      width: 100%;
+      height: 100%;
+      position: absolute;
+    }
+
+    div#loadingBox {
+      width: 100%;
+      height: 20px;
+      position: absolute;
+      top: 50%;
+      margin-top: -10px;
+      text-align: center;
+    }
+
+    div#bgBar {
+      display: none;
+      position: absolute;
+      width: 200px;
+      margin-left: -100px;
+      left: 50%;
+      height: 2px;
+      background-color: #FFF;
+      border-radius: 2px;
+    }
+
+    div#progressBar {
+      display: none;
+      left: 50%;
+      position: absolute;
+      margin-left: -100px;
+      width: 0px;
+      height: 2px;
+      background-color: #990000;
+      border-radius: 2px;
+    }
+
+    p#loadingInfo {
+      color: #FFF;
+      letter-spacing: 1px;
+      position: absolute;
+      width: 100%;
+      font-family: "Monaco", sans-serif;
+      text-transform: uppercase;
+      text-align: center;
+      font-size: 8px;
+      margin-top: 10px;
+    }
+
+    div#spinner {
+      position: absolute;
+      height: 2px;
+      left: 50%;
+      margin-left: -100px;
+      width: 200px;
+      position: relative;
+      overflow: hidden;
+      background-color: #FFF;
+    }
+
+    div#spinner:before {
+      display: block;
+      position: absolute;
+      content: "";
+      left: -200px;
+      width: 200px;
+      height: 4px;
+      background-color: #990000;
+      animation: loading 2s linear infinite;
+    }
+
+    @keyframes loading {
+      from {
+        left: -50%;
+        width: 30%;
+      }
+
+      50% {
+        width: 30%;
+      }
+
+      70% {
+        width: 70%;
+      }
+
+      80% {
+        left: 50%;
+      }
+
+      95% {
+        left: 120%;
+      }
+
+      to {
+        left: 100%;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div id="unityContainer" style="width: 800px; height: 600px; margin: auto"></div>
+</body>
+
+</html>
